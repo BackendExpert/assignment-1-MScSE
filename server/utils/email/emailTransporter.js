@@ -2,7 +2,9 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
@@ -12,7 +14,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async ({ to, subject, html, attachments }) => {
     try {
         const info = await transporter.sendMail({
-            from: `"CareerAI Helper" <${process.env.EMAIL_USER}>`,
+            from: `"Simple Draud Detection" <${process.env.EMAIL_USER}>`,
             to,
             subject,
             html,
