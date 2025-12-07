@@ -11,9 +11,13 @@ const tokens = require("../utils/tokens/generateToken")
 const {
     RegistationResDTO,
     VerifyOTPResDTO,
-    SetupTotpResDTO
+    SetupTotpResDTO,
+    verifyTOTPLoginResDTO
 } = require("../dto/auth.dto")
-const { createTOTPSecret, verifyTOTP } = require("../utils/otps/totp")
+const {
+    createTOTPSecret,
+    verifyTOTP
+} = require("../utils/otps/totp")
 
 class AuthService {
     static async Registaion(username, email, password, req) {
@@ -173,12 +177,69 @@ class AuthService {
         user.totpSecret = secret;
 
         await user.save();
+        if (req) {
+            const metadata = {
+                ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+                userAgent: req.headers['user-agent'],
+                timestamp: new Date(),
+            };
+            await logUserAction(req, "Setup_TOTP", `${email} Successfully Setup TOTP`, metadata, user._id);
+        }
         // return { success: true, qrCode };
         return SetupTotpResDTO(qrCode)
     }
 
-    static async SetupQuestions(token, q1, anwser1, q2, anwser2, q3, anwser3) {
+    static async verifyTOTPLogin(email, totpToken, req) {
+        const user = await User.findOne({ email });
+        if (!user) throw new Error('User not found');
+        if (!user.totpSecret) throw new Error('TOTP not configured');
 
+        const valid = verifyTOTP(user.totpSecret, totpToken);
+        if (!valid) throw new Error('Invalid TOTP token');
+
+        const token = tokens.sign({ id: user._id, email: user.email }, '1d');
+
+        if (req) {
+            const metadata = {
+                ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+                userAgent: req.headers['user-agent'],
+                timestamp: new Date(),
+            };
+            await logUserAction(req, "verifyTOTPLogin", `${email} Successfully Verify TOTP Login`, metadata, user._id);
+        }
+        // return { success: true, token: jwt };
+        return verifyTOTPLoginResDTO(token)
+    }
+
+    static async login(email, password, req) {
+        const user = await User.findOne({ email });
+        if (!user) throw new Error('User not found');
+
+        const ok = await bcrypt.compare(password, user.password);
+        if (!ok) throw new Error('Invalid credentials');
+
+        if (!user.isEmailVerified) throw new Error('Email not verified');
+
+        if (user.totpSecret) {
+            const shortToken = tokens.sign({ email: user.email }, '10m');
+
+            return {
+                success: true,
+                requiresTOTP: true,
+                token: shortToken,
+                message: "TOTP verification required"
+            };
+        }
+
+        // const jwt = tokens.sign({ id: user._id, email: user.email }, '1d');
+        // return { success: true, token: jwt, user: { id: user._id, email: user.email } };
+
+        const jwt = tokens.sign(
+            { id: user._id, email: user.email, role: user.role },
+            '1d'
+        );
+
+        return LoginResDTO(jwt, user);
     }
 }
 
