@@ -239,6 +239,15 @@ class AuthService {
             '1d'
         );
 
+        if (req) {
+            const metadata = {
+                ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+                userAgent: req.headers['user-agent'],
+                timestamp: new Date(),
+            };
+            await logUserAction(req, "Login_success", `${email} Successfully Login`, metadata, user._id);
+        }
+
         return LoginResDTO(jwt, user);
     }
 }
