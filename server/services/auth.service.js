@@ -156,6 +156,14 @@ class AuthService {
 
         return VerifyOTPResDTO()
     }
+    
+    static async SetupAuthApp(){
+
+    }
+
+    static async SetupQuestions(token, q1, anwser1, q2, anwser2, q3, anwser3){
+
+    }
 }
 
 module.exports = AuthService
