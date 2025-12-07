@@ -59,6 +59,14 @@ function ErrorResDTO(msg) {
     };
 }
 
+function SetupTotpResDTO (qrCode, message="QR code send Success") {
+    return {
+        success: true,
+        qrCode,
+        message
+    }
+}
+
 function ForgetPasswordResDTO (token, message="OTP send to your email, Please check the Email") {
     return {
         success: true,
@@ -83,6 +91,7 @@ function UpdatePasswordResDTO (message="Password Updated Successfully") {
 
 module.exports = {
     RegistationDTO, loginDTO, ForgetPasswordDTO, VerifyEmailDTO, UpdatePasswordDTO,
+    SetupTotpResDTO,
     RegistationResDTO, LoginResDTO, ForgetPasswordResDTO, VerifyOTPResDTO, UpdatePasswordResDTO, EmailVerifyResDTO,
     ErrorResDTO
 }

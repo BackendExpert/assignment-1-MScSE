@@ -8,7 +8,12 @@ const crypto = require('crypto')
 const { BCRYPT_SALT, FRONTEND_URL } = require('../config/env');
 const sendEmail = require("../utils/email/emailTransporter")
 const tokens = require("../utils/tokens/generateToken")
-const { RegistationResDTO, VerifyOTPResDTO } = require("../dto/auth.dto")
+const {
+    RegistationResDTO,
+    VerifyOTPResDTO,
+    SetupTotpResDTO
+} = require("../dto/auth.dto")
+const { createTOTPSecret, verifyTOTP } = require("../utils/otps/totp")
 
 class AuthService {
     static async Registaion(username, email, password, req) {
@@ -156,12 +161,23 @@ class AuthService {
 
         return VerifyOTPResDTO()
     }
-    
-    static async SetupAuthApp(){
 
+    static async setupTOTP(token, req) {
+        const decoded = tokens.verify(token);
+        const user = await User.findOne({ email: decoded.email });
+
+        if (!user) throw new Error('User not found');
+        if (user.totpSecret) throw new Error('TOTP already set up');
+
+        const { secret, qrCode } = await createTOTPSecret(user.email);
+        user.totpSecret = secret;
+
+        await user.save();
+        // return { success: true, qrCode };
+        return SetupTotpResDTO(qrCode)
     }
 
-    static async SetupQuestions(token, q1, anwser1, q2, anwser2, q3, anwser3){
+    static async SetupQuestions(token, q1, anwser1, q2, anwser2, q3, anwser3) {
 
     }
 }
