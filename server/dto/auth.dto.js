@@ -52,10 +52,10 @@ function LoginResDTO(token, user, message = "Login Success") {
     }
 }
 
-function ErrorResDTO(msg) {
+function ErrorResDTO(message) {
     return {
         success: false, 
-        message: msg
+        message: message
     };
 }
 
