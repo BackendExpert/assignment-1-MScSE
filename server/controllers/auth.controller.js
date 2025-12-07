@@ -10,7 +10,7 @@ const AuthController = {
                 password,
             } = req.body
 
-            const dtp = RegistationDTO(username, email, password)
+            const dto = RegistationDTO(username, email, password)
 
             const result = await AuthService.Registaion(
                 dto.username,

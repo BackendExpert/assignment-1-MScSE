@@ -18,6 +18,7 @@ const {
     createTOTPSecret,
     verifyTOTP
 } = require("../utils/otps/totp")
+const logUserAction = require("../utils/others/logUserAction")
 
 class AuthService {
     static async Registaion(username, email, password, req) {
@@ -40,7 +41,9 @@ class AuthService {
 
         const otp = crypto.randomBytes(4).toString('hex');
         const hashedOtp = await bcrypt.hash(otp, 10);
-        const otpModel = new UserOTP({ email: newUser.email, otp: hashedOtp });
+        // const otpModel = new UserOTP({ email: newUser.email, otp: hashedOtp });
+        const otpModel = new UserOTP({ email: resultcreateuser.email, otp: hashedOtp });
+
         await otpModel.save();
 
         await sendEmail({
@@ -115,7 +118,7 @@ class AuthService {
         });
 
         // for verify email address
-        const token = tokens.sign({ email: newUser.email }, '15m');
+        const token = tokens.sign({ email: resultcreateuser.email }, '15m');
 
         if (req) {
             const metadata = {
